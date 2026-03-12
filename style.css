@@ -1,33 +1,85 @@
 :root {
     --primary: #4a90e2;
     --accent: #d4af37;
-    --bg: #0a0a0a;
-    --card: #181818;
-    --text: #e0e0e0;
+    --scifi: #00f2ff;
+    --bg: #050505;
+    --glass: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
 }
 
-body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-h1 { letter-spacing: 4px; margin: 0; font-size: 22px; }
-.branding { color: var(--primary); font-size: 10px; font-weight: bold; }
+body {
+    background: var(--bg);
+    background-image: radial-gradient(circle at top right, #1a1a2e, transparent);
+    color: #e0e0e0;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    margin: 0; padding: 20px;
+    line-height: 1.6;
+}
 
-.container { max-width: 800px; margin: auto; }
-.prompt-box { background: var(--card); padding: 20px; border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 20px; }
+header h1 {
+    font-weight: 900;
+    letter-spacing: 5px;
+    text-shadow: 0 0 15px var(--primary);
+    margin-bottom: 5px;
+}
 
-textarea { width: 100%; height: 100px; background: #000; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; }
-.settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-input, select { background: #000; color: white; border: 1px solid #444; padding: 10px; border-radius: 6px; }
+/* The Glassmorphism Card */
+.glass-card {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    margin-bottom: 25px;
+}
 
-.btn-main { width: 100%; padding: 15px; background: var(--primary); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
-.btn-accent { width: 100%; padding: 15px; background: var(--accent); border: none; font-weight: bold; border-radius: 8px; margin-top: 10px; }
+/* Automated 3-Card Layout */
+.forge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    perspective: 1000px;
+}
 
-.forge-output { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; }
-.draft-card { min-width: 300px; background: #222; border: 2px solid #333; padding: 20px; border-radius: 15px; flex-shrink: 0; transition: 0.3s; }
-.draft-card.selected { border-color: var(--accent); background: #2a2a2a; }
+.draft-card {
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
 
-.token-frame { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--accent); margin: 0 auto 10px; background: #000; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
-.match-score { color: var(--accent); font-size: 12px; text-align: center; margin-bottom: 10px; }
+.draft-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px rgba(74, 144, 226, 0.2);
+}
 
-.backstory-box { background: #111; padding: 12px; border-radius: 8px; font-size: 11px; line-height: 1.5; border-left: 2px solid var(--primary); }
-.hidden { display: none; }
-#json-export { background: #000; color: #0f0; padding: 15px; font-size: 10px; overflow-x: auto; border-radius: 8px; margin-top: 15px; }
+.draft-card.selected {
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+}
+
+/* Star Ratings & Tags */
+.rating-tag {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.token-circle {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    margin: 0 auto 15px;
+    background: linear-gradient(45deg, #111, #222);
+    display: flex; align-items: center; justify-content: center;
+}

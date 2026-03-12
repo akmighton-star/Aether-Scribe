@@ -1,0 +1,33 @@
+:root {
+    --primary: #4a90e2;
+    --accent: #d4af37;
+    --bg: #0a0a0a;
+    --card: #181818;
+    --text: #e0e0e0;
+}
+
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; }
+header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+h1 { letter-spacing: 4px; margin: 0; font-size: 22px; }
+.branding { color: var(--primary); font-size: 10px; font-weight: bold; }
+
+.container { max-width: 800px; margin: auto; }
+.prompt-box { background: var(--card); padding: 20px; border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 20px; }
+
+textarea { width: 100%; height: 100px; background: #000; color: white; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; }
+.settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+input, select { background: #000; color: white; border: 1px solid #444; padding: 10px; border-radius: 6px; }
+
+.btn-main { width: 100%; padding: 15px; background: var(--primary); border: none; color: white; font-weight: bold; border-radius: 8px; cursor: pointer; }
+.btn-accent { width: 100%; padding: 15px; background: var(--accent); border: none; font-weight: bold; border-radius: 8px; margin-top: 10px; }
+
+.forge-output { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; }
+.draft-card { min-width: 300px; background: #222; border: 2px solid #333; padding: 20px; border-radius: 15px; flex-shrink: 0; transition: 0.3s; }
+.draft-card.selected { border-color: var(--accent); background: #2a2a2a; }
+
+.token-frame { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--accent); margin: 0 auto 10px; background: #000; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #444; }
+.match-score { color: var(--accent); font-size: 12px; text-align: center; margin-bottom: 10px; }
+
+.backstory-box { background: #111; padding: 12px; border-radius: 8px; font-size: 11px; line-height: 1.5; border-left: 2px solid var(--primary); }
+.hidden { display: none; }
+#json-export { background: #000; color: #0f0; padding: 15px; font-size: 10px; overflow-x: auto; border-radius: 8px; margin-top: 15px; }

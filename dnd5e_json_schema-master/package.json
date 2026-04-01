@@ -1,0 +1,36 @@
+{
+   "name": "dnd5e_json_schema",
+   "author": "Brian Wendt (https://github.com/BrianWendt)",
+   "description": "Standardized Dungeons & Dragons JSON Schemas",
+   "keywords": [
+      "dnd",
+      "json-schema"
+   ],
+   "version": "0.1.3",
+   "repository": {
+      "type": "git",
+      "url": "https://github.com/BrianWendt/dnd5e_json_schema"
+   },
+   "homepage": "https://brianwendt.github.io/dnd5e_json_schema",
+   "public": true,
+   "dependencies": {
+      "json-schema-md-doc": "^0.1.6"
+   },
+   "scripts": {
+      "doc": "node ./scripts/doc.js",
+      "compile": "node ./scripts/compile.js"
+   },
+   "licenses": [
+      {
+         "type": "GNU General Public License v3.0",
+         "url": "https://github.com/BrianWendt/dnd5e_json_schema/blob/master/LICENSE"
+      },
+      {
+         "type": "Open Game License",
+         "url": "http://www.opengamingfoundation.org/ogl.html"
+      }
+   ],
+   "bugs": {
+      "url": "https://github.com/BrianWendt/dnd5e_json_schema/issues"
+   }
+}

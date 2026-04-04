@@ -1,0 +1,182 @@
+import React, { useMemo } from 'react';
+import { Palette } from 'lucide-react';
+
+// ========================================================================= //
+// === 1. THE DICTIONARIES (Scaling & Asset Mapping) ======================= //
+// ========================================================================= //
+
+// BIOMETRIC_PRIME: Automatically scales races and shifts weapon anchors
+export const BIOMETRIC_PRIME = {
+  small: { scale: 0.85, headY: '45%', handY: '65%', handX: 32, tags: ['small', 'halfling', 'gnome', 'goblin', 'kobold'] },
+  dwarf: { scale: 0.95, headY: '30%', handY: '62%', handX: 30, tags: ['dwarf', 'short', 'stocky'] },
+  standard: { scale: 1.05, headY: '18%', handY: '58%', handX: 28, tags: ['human', 'elf', 'tiefling', 'standard', 'medium', 'tabaxi'] },
+  large: { scale: 1.20, headY: '5%', handY: '55%', handX: 25, tags: ['large', 'goliath', 'orc', 'dragonborn', 'giant', 'minotaur', 'tortle'] }
+};
+
+export const LAYER_MAP = [
+  { id: 'background', z: 0 }, { id: 'body', z: 10 }, { id: 'armor', z: 20 },
+  { id: 'beard', z: 30 }, { id: 'hair_front', z: 35 }, { id: 'hand_l', z: 40 },
+  { id: 'hand_r', z: 40 }, { id: 'weapon', z: 50 }, { id: 'companion', z: 60 }
+];
+
+const BG_CROP = { t: 8, b: 25, l: 6, r: 6 };
+const GEAR_CROP = { t: 8, b: 20, l: 8, r: 8 };
+
+// MASTER LEXICON: Maps GitHub filenames to specific tiles on a 4x4 sprite sheet
+export const MASTER_LEXICON = {
+  '6p349': { cols: 4, rows: 3, zoom: 1.35, crop: BG_CROP, labels: ["Acolyte", "Artisan", "Criminal", "Entertainer", "Farmer", "Guard", "Guide", "Merchant", "Graveyard", "Library", "Bounty Hunter", "Astral Void"] },
+  'mixed': { cols: 4, rows: 3, zoom: 1.15, crop: GEAR_CROP, labels: ["Human Male Fighter", "Human Female Mage", "Elf Male Slim", "Elf Female Nature", "Dwarf Male Warrior", "Dwarf Female Smith", "Halfling Male Rogue", "Gnome Female Tech", "Orc Male Barbarian", "Dragonborn Gold", "Tiefling Female Hell", "Tabaxi Tiger Female"] },
+  'weapon': { cols: 4, rows: 4, zoom: 1.20, crop: GEAR_CROP, labels: ["Longsword Steel", "Shortsword", "Greataxe", "Battleaxe", "Warhammer", "Mace", "Dagger", "Spear", "Staff", "Longbow", "Crossbow", "Shield", "Fire Sword", "Ice Wand", "Flail", "Glaive"] },
+  'armory': { cols: 4, rows: 4, zoom: 1.20, crop: GEAR_CROP, labels: ["Plate Armor Heavy", "Chain Mail", "Leather Armor", "Hide Armor", "Silk Robes", "Studded Leather", "Scale Mail", "Breastplate"] }
+};
+
+
+// ========================================================================= //
+// === 2. THE AI MATCHING ENGINE =========================================== //
+// ========================================================================= //
+
+export const matchLexiconAssets = (query, prevVisuals = {}, assetLibrary = []) => {
+    if (!query || assetLibrary.length === 0) return prevVisuals;
+    
+    // Clean and split the AI prompt into keywords
+    const words = query.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+    
+    const newVisuals = { ...prevVisuals };
+    const bestMatches = {};
+
+    assetLibrary.forEach(asset => {
+        if (asset.category === 'inventory') return;
+        const assetName = (asset.name || "").toLowerCase(); 
+        const masterLex = MASTER_LEXICON[asset.lexKey];
+        
+        let bestIdx = -1; 
+        let bestScore = 0;
+
+        // Score based on filename
+        words.forEach(w => { if (assetName.includes(w)) { bestScore += 10; bestIdx = 0; } });
+
+        // Score based on the exact Tile Labels inside the sprite sheet
+        if (masterLex && masterLex.labels) {
+            masterLex.labels.forEach((label, idx) => {
+                const lowerLabel = (label || "").toLowerCase(); 
+                let currentScore = 0;
+                words.forEach(word => {
+                    if (lowerLabel.split(' ').includes(word)) currentScore += 100; // Exact word match
+                    else if (lowerLabel.includes(word)) currentScore += 20; // Partial word match
+                });
+                if (currentScore > bestScore) { bestScore = currentScore; bestIdx = idx; }
+            });
+        }
+
+        // If we found a good match, assign it to the correct body layer
+        if (bestIdx !== -1 && bestScore > 0) {
+            const labelFound = masterLex?.labels?.[bestIdx]?.toLowerCase() || assetName;
+            let layerCategory = asset.category;
+            
+            // Smart sorting for Hands/Weapons/Shields
+            if (layerCategory.startsWith('hand')) layerCategory = 'hand_r';
+            if (labelFound.includes('shield') && words.includes('shield')) layerCategory = 'hand_l';
+            else if ((labelFound.includes('axe') || labelFound.includes('sword') || labelFound.includes('bow')) && words.some(w => ['axe','sword','bow'].includes(w))) layerCategory = 'weapon';
+
+            const isJpeg = asset.url.toLowerCase().includes('.jpg') || asset.url.toLowerCase().includes('.jpeg');
+
+            if (!bestMatches[layerCategory] || bestScore > bestMatches[layerCategory].score) {
+                const existingLayer = prevVisuals[layerCategory] || {};
+                bestMatches[layerCategory] = {
+                    score: bestScore,
+                    layer: { 
+                        ...asset, 
+                        tileIndex: bestIdx, 
+                        chromaMode: (layerCategory !== 'background' && isJpeg) ? 'lighten' : 'normal',
+                        offsetX: existingLayer.offsetX || 0,
+                        offsetY: existingLayer.offsetY || 0,
+                        zoomOffset: existingLayer.zoomOffset || 1
+                    }
+                };
+            }
+        }
+    });
+    
+    Object.keys(bestMatches).forEach(cat => { newVisuals[cat] = bestMatches[cat].layer; });
+    return newVisuals;
+};
+
+
+// ========================================================================= //
+// === 3. THE RENDERER (The CSS Cropping Magic) ============================ //
+// ========================================================================= //
+
+export const LayerFragment = ({ layerId, layerConfig, template, isBackground, data }) => {
+  if (!data || !data.url || data.category === 'inventory') return null;
+  
+  // Calculate Grid Math
+  const lex = MASTER_LEXICON[data.lexKey];
+  const cols = data.parsedCols || lex?.cols || 4;
+  const rows = data.parsedRows || lex?.rows || 3;
+  const baseZoom = parseFloat(lex?.zoom || 1.15);
+  
+  const col = (data.tileIndex || 0) % cols;
+  const row = Math.floor((data.tileIndex || 0) / cols);
+  
+  const xPos = cols > 1 ? (col / (cols - 1)) * 100 : 50;
+  const yPos = rows > 1 ? (row / (rows - 1)) * 100 : 50;
+
+  // Build the CSS Container
+  let containerStyle = { position: 'absolute', inset: 0, overflow: 'hidden', zIndex: layerConfig.z, pointerEvents: 'none' };
+  
+  if (isBackground) {
+      Object.assign(containerStyle, { zIndex: 0, width: '100%', height: '100%' });
+  } else if (layerId.includes('hand') || layerId === 'weapon') {
+      // Scale and position 1x1 weapons directly onto the character's wrists based on Biometrics!
+      const isRightHand = (layerId === 'weapon' || layerId.endsWith('r'));
+      const handXOffset = template.handX || 28; 
+      const handYOffset = template.handY || '58%'; 
+      Object.assign(containerStyle, { 
+          width: `25%`, height: 'auto', aspectRatio: '1/1', 
+          left: `${isRightHand ? (100 - handXOffset) : handXOffset}%`, top: handYOffset, 
+          transform: `translate(-50%, -50%) ${!isRightHand ? 'scaleX(-1)' : ''}`, 
+          zIndex: layerConfig.z + 100 
+      });
+  } else {
+      Object.assign(containerStyle, { top: 0, bottom: 0, left: 0, right: 0, height: '100%' });
+  }
+
+  // Handle Chroma Tinting & Shadows
+  const blendMode = data.chromaMode || 'normal';
+  let chromaFilter = `contrast(1.2) saturate(1.1) brightness(1.05)`;
+  if (blendMode !== 'normal') chromaFilter = `drop-shadow(0px 2px 4px rgba(0,0,0,0.6)) drop-shadow(0px 0px 2px rgba(0,0,0,0.9)) contrast(1.3) saturate(1.15)`;
+
+  return (
+    <div style={containerStyle}>
+      <div style={{ 
+          width: '100%', height: '100%', 
+          backgroundImage: `url(${data.url})`, 
+          backgroundSize: `${cols * 100}% ${rows * 100}%`, 
+          backgroundPosition: `calc(${xPos}% + ${data.offsetX || 0}px) calc(${yPos}% + ${data.offsetY || 0}px)`, 
+          transform: `scale(${baseZoom * (data.zoomOffset || 1)})`, 
+          filter: chromaFilter, mixBlendMode: blendMode, 
+          transition: 'all 0.3s ease-out', imageRendering: 'pixelated' 
+      }} />
+    </div>
+  );
+};
+
+
+// ========================================================================= //
+// === 4. DEFAULT EXPORT (To prevent Canvas crash) ========================= //
+// ========================================================================= //
+
+export default function App() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white font-sans p-6 text-center">
+      <Palette size={64} className="text-indigo-500 mb-6" />
+      <h1 className="text-3xl font-black text-indigo-400 mb-4 tracking-widest uppercase">Chroma Engine Saved</h1>
+      <p className="text-slate-400 max-w-lg mb-2">
+        The image layering reference file has been successfully stored in the Canvas. 
+      </p>
+      <p className="text-slate-500 max-w-lg text-sm italic">
+        (A default component export was added so the preview engine doesn't crash when loading this reference file!)
+      </p>
+    </div>
+  );
+}

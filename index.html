@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aether Scribe | Aether Might Studios</title>
@@ -48,6 +48,13 @@
             <pre id="json-export" class="hidden"></pre>
         </section>
     </main>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js');
+    });
+  }
+</script>
 
     <script src="app.js"></script>
 </body>
